@@ -1,0 +1,218 @@
+/* @import url('https://fonts.googleapis.com/css?family=Roboto+Slab:400,700|Source+Serif+Pro'); */
+/* @import url('https://fonts.googleapis.com/css?family=Fredoka+One|Source+Serif+Pro'); */
+@import url('https://fonts.googleapis.com/css?family=Baloo|Source+Serif+Pro');
+
+body {
+    max-width: 800px;
+    margin: auto;
+    padding: .2em;
+    line-height: 20pt;
+    font-size: 12pt;
+}
+
+/* Table of Contents, if wanted
+
+Add to yaml:
+
+output:
+blogdown::html_page:
+toc: true
+
+ */
+
+#TableOfContents, #TOC {
+    border: 1px solid #eee;
+}
+
+/* Header and Footer */
+.menu li { display: inline-block; }
+.article-meta, .menu a {
+    text-decoration: none;
+    background: #ff99cc;
+    color: #FFF;
+    padding: 5px;
+    text-shadow: 0px 1px 1px #fe3ea0;
+}
+
+
+.article-meta h1, .article-meta h2 {
+    margin-top: 1em;
+    color: white;
+}
+
+
+.terms { font-size: .9em; }
+.menu, .article-meta, footer { text-align: center; }
+.title { font-size: 1.1em; }
+footer a { text-decoration: none; }
+
+.pull-left {
+    float: left
+}
+.pull-right {
+    float: right
+}
+
+a {
+    color: #ff6bb6;
+    text-decoration: none;
+}
+
+a:hover {
+    background: #83cbe3;
+    color: white;
+}
+
+/* Adjust background at your leisure! */
+header {
+    position: relative;
+    width: 100%;
+    height: 1.75rem;
+    font-size: .875rem;
+    background: #83cbe3;
+    font-family: 'Baloo', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 2em;
+    font-family: 'Baloo', sans-serif;
+    /* color: #ff99cc; */
+    color: #ff6bb6;
+}
+
+li {
+    padding-bottom: 1em;
+}
+
+header ul,
+header ol {
+    margin: 0;
+    padding: 0;
+    list-style: none
+}
+header nav {
+    padding: 0 0.5rem
+}
+
+header a {
+    color: #fff;
+    line-height: 1.75rem;
+    padding: 0 0.5rem
+}
+header a:hover,
+header .current a {
+    color: #fff
+}
+
+/* Code Boxes */
+pre {
+    border: 1px solid #ddd;
+    box-shadow: 5px 5px 5px #eee;
+    background: #f8f8f8;
+    padding: 1em;
+    overflow-x: auto;
+}
+code { background: #f9f9f9; }
+pre code { background: none; }
+
+/* Images, tables, misc. */
+img, iframe, video { max-width: 100%; }
+main {
+    text-align: justify;
+    word-wrap: break-word;
+    font-family: "Source Serif Pro", "Times New Roman", serif;
+    color: #555;
+    hyphens: auto;
+}
+
+/* Caution! duplicate this rule below. */
+::selection {
+    background: #83cbe3;
+    color: white;
+}
+
+::-moz-selection {
+    background: #83cbe3;
+    color: white;
+}
+
+/* Caution! duplicate this rule below. */
+a::-moz-selection {
+    background: #ff99cc;
+    color: white;
+}
+
+a::selection {
+    background: #ff99cc;
+    color: white;
+}
+
+blockquote {
+    background: #f9f9f9;
+    border-left: 5px solid #ccc;
+    padding: 3px 1em 3px;
+}
+
+table {
+    margin: auto;
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+tr:nth-child(even) { background: #eee }
+
+figure.side-by-side {
+    width: 49%;
+    min-width: 15em;
+    display: inline-block;
+    margin: 0 0 0 0;
+    padding: 0 40px 0 0;
+    vertical-align: top;
+    box-sizing: border-box;
+}
+
+figure figure.side-by-side:nth-of-type(2) {
+    padding: 0;
+}
+
+figure img, figure video {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+figcaption a {
+    background: white;
+    color: #83cbe3;
+}
+
+figcaption a:hover {
+    background: #ff6bb6;
+}
+
+figcaption {
+    display: block;
+    line-height: 16pt;
+    background: #83cbe3;
+    color: white;
+    font-family: 'Baloo', sans-serif;
+    padding: 1em;
+    border-radius: 0 0 0.5em 0.5em;
+}
+
+figure {
+    margin-top: 3em;
+    margin-bottom: 3em;
+}
+
+#license-info img {
+    vertical-align: middle;
+}
+
+#license-info {
+    color: #aaa;
+    font-size: 10pt;
+    font-family: "Source Serif Pro", "Times New Roman", serif;
+}

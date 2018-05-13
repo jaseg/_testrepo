@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>jaseg.net</title>
+    <link>https://jaseg.github.io/_testrepo/</link>
+    <description>Recent content on jaseg.net</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 19 May 2018 08:09:46 +0200</lastBuildDate>
+    
+	<atom:link href="https://jaseg.github.io/_testrepo/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>How to talk to your microcontroller over serial</title>
+      <link>https://jaseg.github.io/_testrepo/posts/serial-protocols/</link>
+      <pubDate>Sat, 19 May 2018 08:09:46 +0200</pubDate>
+      
+      <guid>https://jaseg.github.io/_testrepo/posts/serial-protocols/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Zeus Hammer</title>
+      <link>https://jaseg.github.io/_testrepo/posts/zeus-hammer/</link>
+      <pubDate>Thu, 03 May 2018 11:59:37 +0200</pubDate>
+      
+      <guid>https://jaseg.github.io/_testrepo/posts/zeus-hammer/</guid>
+      <description>In case you were having an inferiority complex because your friends&#39; IBM Model M keyboards are so much louder than the shitty rubber dome freebie you got with your pc... Here&#39;s the solution: Zeus Hammer, a simple typing cadence enhancer for PS/2 keyboards.
+The connects to the keyboard&#39;s PS/2 clock line and briefly actuates a large solenoid on each key press. An interesting fact about PS/2 is that the clock line is only active as long as either the host computer or the input device actually want to send data.</description>
+    </item>
+    
+    <item>
+      <title>32-Channel LED tape driver</title>
+      <link>https://jaseg.github.io/_testrepo/posts/multichannel-led-driver/</link>
+      <pubDate>Wed, 02 May 2018 11:31:14 +0200</pubDate>
+      
+      <guid>https://jaseg.github.io/_testrepo/posts/multichannel-led-driver/</guid>
+      <description>Theoretical basics Together, a friend and I outfitted the small staircase at Berlin&#39;s Chaos Computer Club with nice, shiny RGB-WW LED tape for ambient lighting. This tape is like regular RGB tape but with an additional warm white channel, which makes for much more natural pastels and whites. There are several variants of RGBW tape. Cheap ones have separate RGB and white LEDs, which is fine for indirect lighting but does not work for direct lighting.</description>
+    </item>
+    
+    <item>
+      <title>Wifi Led Driver</title>
+      <link>https://jaseg.github.io/_testrepo/posts/wifi-led-driver/</link>
+      <pubDate>Wed, 02 May 2018 11:31:03 +0200</pubDate>
+      
+      <guid>https://jaseg.github.io/_testrepo/posts/wifi-led-driver/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Led Characterization</title>
+      <link>https://jaseg.github.io/_testrepo/posts/led-characterization/</link>
+      <pubDate>Wed, 02 May 2018 11:18:38 +0200</pubDate>
+      
+      <guid>https://jaseg.github.io/_testrepo/posts/led-characterization/</guid>
+      <description>Preface Recently, I have been working on a small driver for ambient lighting using 12V LED strips like you can get inexpensively from China. I wanted to be able to just throw one of these somewhere, stick down some LED tape, hook it up to a small transformer and be able to control it through Wifi. When I was writing the firmware, I noticed that when fading between different colors, the colors look all wrong!</description>
+    </item>
+    
+  </channel>
+</rss>

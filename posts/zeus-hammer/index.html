@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zeus Hammer | jaseg.net</title>
+    <link rel="stylesheet" href="/_testrepo/css/style.css" />
+    <link rel="stylesheet" href="/_testrepo/css/fonts.css" />
+    
+    <header>
+
+  
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <nav>
+    <ul>
+      
+      
+      <li class="pull-left ">
+        <a href="https://jaseg.github.io/_testrepo/">/home/jaseg.net</a>
+      </li>
+      
+
+      
+
+    </ul>
+  </nav>
+</header>
+
+  </head>
+
+  <body>
+    <br/>
+
+<div class="article-meta">
+<h1><span class="title">Zeus Hammer</span></h1>
+
+<h2 class="date">2018/05/03</h2>
+<p class="terms">
+  
+  
+  
+  
+  
+</p>
+</div>
+
+
+
+<main>
+<div class="document">
+
+
+<p>In case you were having an inferiority complex because your friends' IBM Model M keyboards are so much louder than the
+shitty rubber dome freebie you got with your pc... Here's the solution: Zeus Hammer, a simple typing cadence enhancer
+for <a class="reference external" href="https://en.wikipedia.org/wiki/PS/2_port">PS/2</a> keyboards.</p>
+<!-- FIXME: add demo video -->
+<p>The connects to the keyboard's PS/2 clock line and briefly actuates a large solenoid on each key press. An interesting
+fact about PS/2 is that the clock line is only active as long as either the host computer or the input device actually
+want to send data. In case of a keyboard that's the case when a key is pressed or when the host changes the keyboard's
+LED state, otherwise the clock line is silent. We ignore the LED activity for now as it's generally coupled to key
+presses. By just triggering an NE555 configured as astable flipflop we can stretch each train of clock pulses to a
+pulse a few tens of milliseconds long that is enough to actuate the solenoid.</p>
+<img alt="/images/zeus_hammer_schematic.jpg" src="/images/zeus_hammer_schematic.jpg" />
+<p>Since PS/2 sends each key press and key release separately this circuit will pulse twice per keystroke. It would be
+possible to ignore one of them but I figure the added noise just adds to the experience.</p>
+<p>Built on a breadboard, the circuit looks like this.</p>
+<img alt="/images/zeus_hammer_breadboard.jpg" src="/images/zeus_hammer_breadboard.jpg" />
+<p>The completed system looks like this.</p>
+<!-- FIXME: add image of completed system -->
+<p>Since my solenoid did not have a tensioning spring I used a rubber band and some vinyl tape to make an adjustable
+tensioner. The small orange USB hub serves as an end-stop because I had nothing else of the right shape. The sound and
+resonance of the thing can be adjusted to taste by moving the end stop, adjusting the tensioning rubber and tuning the
+excitation duration using the potentiometer. My particular solenoid was a bit slow so I added some pieces of circuit
+board as shims between the plunger and the case to limit the plunger's travel inside the solenoid core. Here is another
+video of the thing in action in which I tune and de-tune the mechanical resonance using the potentiometer.</p>
+<!-- FIXME: add video w/ tune/detune -->
+</div>
+</main>
+
+    <footer>
+      
+<script>
+(function() {
+  function center_el(tagName) {
+    var tags = document.getElementsByTagName(tagName), i, tag;
+    for (i = 0; i < tags.length; i++) {
+      tag = tags[i];
+      var parent = tag.parentElement;
+      
+      if (parent.childNodes.length === 1) {
+        
+        if (parent.nodeName === 'A') {
+          parent = parent.parentElement;
+          if (parent.childNodes.length != 1) continue;
+        }
+        if (parent.nodeName === 'P') parent.style.textAlign = 'center';
+      }
+    }
+  }
+  var tagNames = ['img', 'embed', 'object'];
+  for (var i = 0; i < tagNames.length; i++) {
+    center_el(tagNames[i]);
+  }
+})();
+</script>
+
+      
+      <div id="license-info">
+           &#169;2018 by Sebastian Götte. This work is licensed under
+           <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>.
+      </div>
+    </footer>
+  </body>
+</html>
+

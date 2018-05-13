@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Led Characterization | jaseg.net</title>
+    <link rel="stylesheet" href="/_testrepo/css/style.css" />
+    <link rel="stylesheet" href="/_testrepo/css/fonts.css" />
+    
+    <header>
+
+  
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <nav>
+    <ul>
+      
+      
+      <li class="pull-left ">
+        <a href="https://jaseg.github.io/_testrepo/">/home/jaseg.net</a>
+      </li>
+      
+
+      
+
+    </ul>
+  </nav>
+</header>
+
+  </head>
+
+  <body>
+    <br/>
+
+<div class="article-meta">
+<h1><span class="title">Led Characterization</span></h1>
+
+<h2 class="date">2018/05/02</h2>
+<p class="terms">
+  
+  
+  
+  
+  
+</p>
+</div>
+
+
+
+<main>
+<div class="document">
+
+
+<div class="section" id="preface">
+<h2>Preface</h2>
+<p>Recently, I have been working on a <a class="reference external" href="https://jaseg.github.io/_testrepo/posts/wifi-led-driver/">small driver</a> for ambient lighting using 12V LED strips like you can get
+inexpensively from China. I wanted to be able to just throw one of these somewhere, stick down some LED tape, hook it up
+to a small transformer and be able to control it through Wifi. When I was writing the firmware, I noticed that when
+fading between different colors, the colors look <em>all wrong</em>! This observation led me down a rabbit hole of color
+perception and LED peculiarities.</p>
+<p>The idea of the LED driver was that it can be used either with up to eight single-color LED tapes or, much more
+interesting, with up to two RGB or RGBW (red-green-blue-white) LED tapes. For ambient lighting high color resolution was
+really important so you could dim it down a lot without flickering. I ended up using the same driver stage I used in the
+<a class="reference external" href="https://jaseg.github.io/_testrepo/posts/multichannel-led-driver/">multichannel LED driver</a> project for its great color resolution and low hardware requirements.</p>
+<figure>
+    <img src="images/rgb_cube.svg" alt="An illustration of the RGB color cube.">
+    <figcaption>An illustration of the RGB color cube.
+        <a href="https://commons.wikimedia.org/wiki/File:RGB_color_cube.svg">Picture</a> by
+        <a href="https://commons.wikimedia.org/wiki/User:Maklaan">Maklaan from Wikimedia Commons</a>,
+        <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA 3.0</a>
+    </figcaption>
+</figure><p>To make setting colors over Wifi more intuitive I implemented support for HSV colors. RGB is fine for communication
+between computers, but I think HSV is easier to work with when manually inputting colors from the command line. RGB  is
+close to how most monitors, cameras and the human visual apparatus work on a very low level but doesn't match
+higher-level human color perception very well. When we describe a color we tend to think in terms of &quot;hue&quot; or
+&quot;brightness&quot;, and computing a measure of those from RGB values is not easy.</p>
+</div>
+<div class="section" id="colors-and-color-spaces">
+<h2>Colors and Color Spaces</h2>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Color_space">Color spaces</a> are a mathematical abstraction of the concept of color. When we say &quot;RGB&quot;, most of the time we actually
+mean <a class="reference external" href="https://en.wikipedia.org/wiki/SRGB">sRGB</a>, a standardized notion of how to map three numbers labelled &quot;red&quot;, &quot;green&quot; and &quot;blue&quot; onto a perceived
+color. <a class="reference external" href="https://en.wikipedia.org/wiki/HSL_and_HSV">HSV</a> is an early attempt to more closely align these numbers with our perception. After HSV, a number of other
+<em>perceptual</em> color spaces such as <a class="reference external" href="https://en.wikipedia.org/wiki/CIE_1931_color_space">XYZ (CIE 1931)</a> and <a class="reference external" href="https://en.wikipedia.org/wiki/Lab_color_space">CIE Lab/LCh</a> were born, further improving this alignment.  In
+this mathematical model, mapping a color from one color space into another color space is just a coordinate
+transformation.</p>
+<figure>
+    <img src="images/hsv_cylinder.png" alt="An illustration of the HSV color space as a cylinder.">
+    <figcaption>An illustration of the HSV color space as a cylinder.
+        <a href="https://commons.wikimedia.org/wiki/File:HSV_color_solid_cylinder.png">Picture</a> by
+        <a href="https://commons.wikimedia.org/wiki/User:SharkD">SharkD from Wikimedia Commons</a>,
+        <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA 3.0</a>
+    </figcaption>
+</figure><p>CIE 1931 XYZ is much larger than any other color space, which is why it is a good basis to express other color spaces
+in. In XYZ there are many coordinates that are outside of what the human eye can perceive. Below is an illustration of
+the sRGB space within XYZ. The wireframe cube is (0,0,0) to (1,1,1) in XYZ.  The colorful object in the middle is what
+of sRGB fits inside XYZ, and the lines extending out from it indicate the space that can be expressed in sRGB but not in
+XYZ. The fat white curve is a projection of the <em>monochromatic spectral locus</em>, that is the curve of points you get in
+XYZ for pure visible wavelengths.</p>
+<p>As you can see, sRGB is <em>much</em> smaller than XYZ or even the part within the monochromatic locus that we can perceive. In
+particular in the blues and greens we loose <em>a lot</em> of colors to sRGB.</p>
+<figure>
+    <video controls loop>
+        <source src="video/sRGB.mkv" type="video/h264">
+        <source src="video/sRGB.webm" type="video/webm">
+        Your browser does not support the HTML5 video tag.
+    </video>
+    <figcaption>Illustration of the measured sRGB color space within XYZ. The thick, white line is the spectral
+        locus.
+
+        <a href="video/sRGB.mkv">mkv/h264 download</a> /
+        <a href="video/sRGB.webm">webm download</a>
+    </figcaption>
+</figure><p>The wrong colors I got when fading between colors were caused by this coordinate transformation being askew. Thinking
+over the problem, there are several sources for imperfections:</p>
+<ul class="simple">
+<li>The LED driver may not be entirely linear. For most modulations such as PWM the brightness will be linear starting
+from a certain value, but there is probably an offset caused by imperfect edges of the LED current. This offset can be
+compensated with software calibration. I built a calibration setup for driver linearity in the <a class="reference external" href="https://jaseg.github.io/_testrepo/posts/multichannel-led-driver/">multichannel LED
+driver</a> project. Below are pictures of ringing on the edges of an LED driver's waveform.</li>
+<li>The red, green and blue channels of the LEDs used on the LED tape are not matched.  This skews the RGB color space.
+In practice, the blue channel of my RGB tape to me <em>looks</em> much brighter than the red channel.</li>
+<li>The precise colors of the red, green and blue channels of the LEDs are unknown. Though the red channel <em>looks</em> red, it
+may be of a slightly different hue compared to the reference red used in <a class="reference external" href="https://en.wikipedia.org/wiki/SRGB">sRGB</a> which would also skew the RGB color
+space.</li>
+</ul>
+<figure>
+    <figure class="side-by-side">
+        <img src="images/driver_ringing_strong.jpg" alt="Strong ringing on the LED voltage waveform edge at about
+        100% overshoot during about 70% of the cycle time.">
+        <figcaption>The LED strip being at the end of a couple meters of wire caused extremely bad ringing at high
+        driving frequencies.</figcaption>
+    </figure><figure class="side-by-side">
+        <img src="images/driver_ringing_weak.jpg" alt="Weak ringing on the LED voltage waveform edge at about 30%
+        overshoot during about 20% of the cycle time.">
+        <figcaption>Adding a resistor in front of the MOSFET gate to slow the transition dampened the ringing
+        somewhat, but ultimately it cannot be eliminated entirely.</figcaption>
+    </figure>
+</figure><p>These last two errors are tricky to compensate. What I needed for that was basically a model of the <em>perceived</em> colors
+of the LED tape's color channels. A way of doing his is to record the spectra of all color channels and then evaluate
+their respective XYZ coordinates. If all three channels are measured in one go with the same setup the relative
+magnitudes of the channels in XYZ will be accurate.</p>
+<p>To map any color to the LEDs, the color's XYZ coordinates simply have to be mapped onto the linear coordinate system
+produced by these three points within XYZ. LEDs are mostly linear in their luminous flux vs. current characteristic so
+this model will be adequate. The spectral integrals mapping the channels' measured responses to XYZ need only be
+calculated once and their results can be used as scaling factors thereafter.</p>
+</div>
+<div class="section" id="measuring-the-spectrum">
+<h2>Measuring the spectrum</h2>
+<p>In order to compensate for the cheap LED tape's non-ideal performance I had to measure the LED's red, green and blue
+channels' spectra. The obvious thing would be to go out and buy a <a class="reference external" href="https://en.wikipedia.org/wiki/Ultraviolet%E2%80%93visible_spectroscopy">spectrograph</a>, or ask someone to borrow theirs. The
+former is kind of expensive, and I did not want to wait two weeks for the thing to arrive. The latter I could probably
+not do every time I got new LED tape. Thus the only choice was to build my own.</p>
+<p>Luckily, building your own spectrometer is really easy. The first thing you need is something that splits incident light
+into its constituent wavelengths. In professional devices this is called the <em>`monochromator`_</em>, since it allows extraction
+of small color bands from the spectrum. The second thing is some sort of optics that project the incident light onto a
+screen behind the monochromator. In professional devices lenses or curved mirrors are used. In a simple homebrew job a
+pinhole as you would use in a <a class="reference external" href="https://en.wikipedia.org/wiki/Pinhole_camera">camera obscura</a> does a remarkably nice job.</p>
+<p>For the monochromator component several things could be used. A prism would work, but I did not have any. The
+alternative is a <a class="reference external" href="https://en.wikipedia.org/wiki/Diffraction_grating">diffraction grating</a>. Professional gratings are quite specialized pieces of equipment and thus
+rather expensive. Luckily, there is a common household item that works almost as well: A regular CD or DVD. The
+microscopic grooves that are used to record data in a CD or DVD work the same as the grooves in a professional
+diffraction grating.</p>
+</div>
+<div class="section" id="household-spectra">
+<h2>Household spectra</h2>
+<p>From this starting point, a few seconds on my favorite search engine yielded an <a class="reference external" href="http://www.candac.ca/candacweb/sites/default/files/BuildaSpectroscope.pdf">article by two researchers from the
+National Science Museum in Tokyo</a> providing a nice blueprint for a simple cardboard-and-DVD construction for use in
+classrooms. I replicated their device using a DVD and it worked beautifully. Daylight and several types of small LEDs I
+had around did show the expected spectra. Small red, yellow, green, and blue LEDs showed narrow spectra, daylight one
+continuous broad one, and white LEDs a continuous broad one with a distinct bright spot in the blue part. The
+single-color LED spectra are quite narrow since they are determined by the LED's semiconductor's band gap, which is
+specific to the semiconductor used and is quite precise. White LEDs are in fact a blue LED chip covered with a so-called
+<em>phosphor</em>. This phosphor is not elementary phosphorus but an anorganic compound that absorbs the LED chip's blue light
+and re-emits a broader spectrum of more yellow-ish wavelengths instead. The final LED spectrum is a superposition of
+both spectra, with some of the original blue light leaking through the phosphor mixing with the broadband yellow
+spectrum of the phosphor.</p>
+<figure>
+    <figure class="side-by-side">
+        <img src="images/spectrograph_step1_parts.jpg">
+        <figcaption>The ingredients. The cup of coffee and Madoka Magica DVD set are essential to the eventual
+        function of the appartus.</figcaption>
+    </figure><figure class="side-by-side">
+        <img src="images/spectrograph_step2.jpg">
+        <figcaption>Step 1: Cut to size and mark down all holes as described in <a
+        href="http://www.candac.ca/candacweb/sites/default/files/BuildaSpectroscope.pdf">the manual</a></figcaption>
+    </figure>
+    <figure class="side-by-side">
+        <img src="images/spectrograph_step3.jpg">
+        <figcaption>Step 2: Cut out all holes</figcaption>
+    </figure><figure class="side-by-side">
+        <img src="images/spectrograph_step4_complete.jpg">
+        <figcaption>The finished result with the back side showing. The viewing window is on the bottom of the other
+        side.</figcaption>
+    </figure>
+</figure><p>Now that I had a spectrograph, I needed a somewhat predictable way of measuring the spectrum it gave me.</p>
+</div>
+<div class="section" id="measuring-a-spectrum">
+<h2>Measuring a spectrum</h2>
+<p>Pointing a camera at the spectrograph would be the obvious thing to do. This produces pretty images but has one critical
+flaw: I wanted to acquire quantitative measurements of brightness across the spectrum. Since I don't have a precise
+technical datasheet specifying the spectral response of any of my cameras I can't compare the absolute brightness of
+different colors on their pictures. Some other sensor was needed.</p>
+<figure>
+    <img src="images/daylight_spectrum_dvd.jpg">
+    <figcaption>The daylight spectrum as seen using a DVD as a grating.
+        <a href="https://commons.wikimedia.org/wiki/File:SpectresSolaires-DVD.jpg">Picture</a> by
+        <a href="https://commons.wikimedia.org/wiki/User:Xofc">Xofc from Wikimedia Commons</a>,
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>
+    </figcaption>
+</figure><div class="section" id="measuring-light-intensity">
+<h3>Measuring light intensity</h3>
+<p>Looking around my lab, I found a bag of <a class="reference external" href="https://dammedia.osram.info/media/resource/hires/osram-dam-2495903/SFH%202701.pdf">SFH2701</a> visible-light photodiodes. Their
+datasheet includes their spectral response so I can compensate for that, allowing precise-ish absolute intensity
+measurements. Just like LEDs, photodiodes are extremely linear across several orders of magnitude. The datasheet of the
+classic <a class="reference external" href="http://www.vishay.com/docs/81521/bpw34.pdf">BPW34</a> photodiode shows that this photodiode's light current is exactly proportional to illuminance over at
+least three orders of magnitude. The <a class="reference external" href="https://dammedia.osram.info/media/resource/hires/osram-dam-2495903/SFH%202701.pdf">SFH2701</a> datasheet does not include a similar graph but its performance will be
+similar. The <a class="reference external" href="https://dammedia.osram.info/media/resource/hires/osram-dam-2495903/SFH%202701.pdf">SFH2701</a> photodiodes I had at hand were perfect for the job compared to the vintage <a class="reference external" href="http://www.vishay.com/docs/81521/bpw34.pdf">BPW34</a> since their
+active sensing area is really small (0.6mm by 0.6mm) compared to the BPW34 (a whopping 3mm by 3mm). If I were to use a
+<a class="reference external" href="http://www.vishay.com/docs/81521/bpw34.pdf">BPW34</a> I would have to insert some small apterture in front of it so it does not catch too broad a part of the
+spectrum at once. The <a class="reference external" href="https://dammedia.osram.info/media/resource/hires/osram-dam-2495903/SFH%202701.pdf">SFH2701</a> is small enough that if I just point it at the projected spectrum directly I will
+already get only a small part of the spectrum inside its 0.6mm active area.</p>
+<p>To convert the photodiode's tiny photocurrent into a measurable voltage I built another copy of the <a class="reference external" href="https://en.wikipedia.org/wiki/Transimpedance_amplifier">transimpedance
+amplifier</a> circuit I already used in the <a class="reference external" href="https://jaseg.github.io/_testrepo/posts/multichannel-led-driver/">multichannel LED driver</a>. A <a class="reference external" href="https://en.wikipedia.org/wiki/Transimpedance_amplifier">transimpedance amplifier</a> is an
+amplifiert that produces a large voltage from a small current. The weird name comes from the fact that it works kind of
+like an amplified resistor (which can be generalized as an <em>impedance</em> electrically). Apply a current to a resistor and
+you get a voltage. A transimpedance amplifiert does the same with the difference that its input always stays at 0V,
+making it look like an ideal current sink to the connected current source.</p>
+<p>Transimpedance amplifiers are common in optoelectronics to convert small photocurrents to voltages. In this instance I
+built a very simple circuit with a dampened transimpedance amplifier stage followed by a simple RC filter for noise
+rejection and a regular non-inverting amplifier using another op-amp from the same chip to further boost the filtered
+transimpedance amplifier output. I put all the passives setting amplifier response (the gain-setting resistors and the
+filter resistor and capacitors) on a small removable adapter so I could easily change them if necessary. I put a small
+trimpot on the virtual ground both amplifers use as a reference so I could trim that if necessary.</p>
+<figure>
+    <img src="images/preamp_schematic.jpg" alt="A drawing of the photodiode preamplifier's schematic">
+    <figcaption>The photodiode preamplifier schematic. Schematic drawn with an unlicensed copy of
+    DaveCAD.</figcaption>
+</figure><p>Following are pictures of the preamplifier board. The connectors on the top-left side are two copies of the analog
+signal for the ADC and a small panel meter. The SMA connector is used as the photodiode input since coax cables are
+generally low-leakage and have built-in shielding. The circuit is powered via the micro-USB connector and the analog
+ground bias voltage can be adjusted using the trimpot.</p>
+<p>For easy replacement, all passives setting gain and frequency response are on a small, pluggable carrier PCB made from a
+SMD-to-DIP adapter.</p>
+<p>Flying-wire construction is just fine for this low-frequency circuit. In a high-speed photodiode preamp, the
+transimpedance amplifier circuit would be highly sensitive to stray capacitance, but we're not aiming at high speed
+here.</p>
+<figure>
+    <figure class="side-by-side">
+        <img src="images/preamp_front.jpg">
+        <figcaption>The front side of the preamplifier board.</figcaption>
+    </figure><figure class="side-by-side">
+        <img src="images/preamp_back.jpg">
+        <figcaption>The wiring of the photodiode preamp.</figcaption>
+    </figure>
+</figure><p>Given a way to measure intensity what remains missing is a way to scan a single photodiode across the spectrum.</p>
+</div>
+<div class="section" id="scanning-the-projection">
+<h3>Scanning the projection</h3>
+<p>A cheap linear stage can be found in any old CD or DVD drive. These drives use a small linear stage based on a
+stepper-driven screw to move the laser unit radially. Removing the laser unit and connecting a leftover stepper driver
+module I was left with a small linear stage with about 45 steps per cm without microstepping enabled. The driver I used
+was an <a class="reference external" href="https://www.pololu.com/file/0J450/A4988.pdf">A4988</a> module that required at least 8V motor drive voltage. I used a small micro USB-input boost converter
+module to generate a stable 10V supply for the motor driver, with the USB's 5V rail used as a logic supply for the motor
+driver.</p>
+<p>The <a class="reference external" href="https://dammedia.osram.info/media/resource/hires/osram-dam-2495903/SFH%202701.pdf">SFH2701</a> can easily be mounted to the linear stage using a small SMD breakout board glued in place with thin wires
+connecting it to the transimpedance amplifier. The DVD drive linear stage is not very strong so it is important that
+this wire does not put too much strain on it.</p>
+<p>Above the photodiode, I mounted a small piece of paper on the linear stage to be used as a projection screen to align
+the linear stage in front of the spectrometer viewing window. A line on the screen paper points to the photodiode die in
+parallel to the linear stage allowing precise alignment.</p>
+<p>The whole unit with photodiode preamplifier, linear stage, photodiode and stepper motor driver finally looks like this:</p>
+<figure>
+    <img src="images/electronics_whole.jpg" alt="The complete electronics setup of the spectrograph. In the back
+    there is the DVD drive stepper stage. In front of it, mounted on a piece of wood are a small USB-to-12V
+    switching-regulator module to power the stepper motor in the top left, below on the bottom left is the
+    photodiode preamp and on the right is a breadboard with the stepper driver module and lots of jumper wires
+    interconnecting everything. On the right of the breadboard, a buspirate is attached to interface everything to a
+    computer. On the bottom edge of the piece of wood, two LED panel meters are mounted for readout of the preamp
+    output and the stepper supply voltages.">
+    <figcaption>The complete electronics setup. The buspirate on the right interfaces to a computer and controls the
+    stepper driver and ADC'es the preamp output. The two panel meters show the preamp output and stepper voltage for
+    setup.</figcaption>
+</figure><p>The projection of the spectrum can be adjusted by moving the light source relative to the entry slot and by moving
+around the grating DVD.</p>
+</div>
+<div class="section" id="the-capture-process">
+<h3>The capture process</h3>
+<p>To capture a spectrum, first the light source has to be mounted near the spectrograph's entry slot. The LED tape I
+tested I just taped face-down directly into it. Next, the grating DVD has to be adjusted to make sure the spectrum
+covers a sensible part of the photodiode's path. Mostly, this boils down to adjusting the photodiode distance and height
+to match the vertical extent and wiggling the grating DVD to adjust the projection's horizontal position.</p>
+<p>After the optics are set-up, the photodiode preamplifier has to be adjusted. In my experiments, most LED tape at 5GΩ
+required a high-ish amplification. The goal in this step is to maximize the peak response of the preamp  to be just
+shy of its VCC rail to make best use of its dynamic range. To adjust the pre-amp, I took several very coarsely-spaced
+measurements to give me an estimate of the peak while I did not yet know its precise location.</p>
+<p>Since stray daylight totally swamped out the weak projection of the LED's spectrum I shielded the entire setup with a
+small box made of black cardboard and two black t-shirts on top. This shielding proved adequate for all my measurements
+but I had to be careful not to accidentially move the DVD that was stuck into the spectrograph with the shielding
+t-shirts.</p>
+<p>For capturing a single spectrum I wrote a small python script that will automatically move the stepper in adjustable
+intervals and take two measurements at each point, one with the LED tape off that can be used for offset calibration and
+one with the LED tape on. All measurements are stored in a sqlite database that can then be accesssed from other
+scripts.</p>
+<p>I built a small script that shows the progress of the current run and an jupyter notebook for data analysis. The jupyter
+notebook is capable of live-updating a graph with the in-progress spectrum's data. This was quite useful as a sanity
+check for when I made some mistake easy to spot in the resulting data.</p>
+<p>After one color channel is captured, the LED tape has to be manually set to the next color and the next measurement can
+begin.</p>
+<figure>
+    <img src="images/raw_plot_cheap_rgb.svg" alt="A plot with three wide peaks, two large peaks on both sides and
+    one smaller one in the middle. The middle one overlaps the two on the sides. The large ones are about 2.5V in
+    amplitude. Overall, the plot is about 300 stepper steps wide with each peak being around 130 steps wide.">
+    <figcaption>A plot of the raw preamp output voltage versus stepper position. From left to right, the three peaks
+    are blue, green and red. Step 0 corresponds to the bottommost stepper position and the shortest wavelength.
+    </figcaption>
+</figure></div>
+<div class="section" id="data-analysis">
+<h3>Data analysis</h3>
+<p>Data analysis consists of three major steps: Offset- and stray light removal, wavelength and amplitude calibration and
+color space mapping.</p>
+<div class="section" id="offset-removal">
+<h4>Offset removal</h4>
+<p>The first task is to remove the offset caused by dark current as well as stray light of the LED's bright primary
+reflection on the DVD. The LED is very bright and only a small part of its light gets reflected by the grating towards
+the photodiode screen. The remaining part of the light is reflected onto the table in front of the DVD spectrograph.
+Though I covered all of this with black cardboard, some of that light ultimately gets reflected onto the photodiode.
+This causes a large offset, in particular in the blue part of the spectrum since in this part the photodiode is closest
+to the spectrograph's opening.</p>
+<p>The composite offset can be approximated with a second-order polynomial that is fitted to all the data outside of the
+main peak's area. Since at this point the wavelength of each data point is still unknown this is done with a rough first
+estimate of the three colors' peaks' locations and widths.</p>
+</div>
+<div class="section" id="wavelength-and-amplitude-calibration">
+<h4>Wavelength- and amplitude calibration</h4>
+<p>The photodiode's response is strongly wavelength-dependent. In particular in the blue band, the photodiode's sensitivity
+gets very poor down to about 20% at the edge to ultraviolet. This effect is strong enough to move the apparent location
+of the blue peak towards red.</p>
+<figure>
+    <img src="images/photodiode_sensitivity.svg" alt="A plot of photodiode sensitivity against wavelength relative
+    to peak sensitivity at 820nm.  The sensitivity rises from 20% at 380nm approximately linearly to 80% at 620nm,
+    then the rise rolls off.">
+    <figcaption>A plot of the photodiode's relative sensitivity in the visible spectrum. The sensitivity is
+    normalized against its peak at 820nm.
+    </figcaption>
+</figure><p>The problem is that in order to remove this non-linearity, we would already have to know the wavelength of the measured
+light. Since I don't, I settled for a two-step process. First, a coarse wavelength calibration is done relative to the
+red peak and the short-wavelength edge of the blue peak. The photodiode measurements are then sensitivity-corrected
+using this coarse measurement. Then all three channel peaks are measured in the resulting data and a fine wavelength
+estimate is produced by a least-squares fit of a linear function. This fine estimate is then used for a second
+sensitivity correction of all original measurements and the scale is changed from stepper motor step count to
+wavelength in nanometers.</p>
+<figure>
+    <img src="images/processed_plot_cheap_rgb.svg" alt="A plot with three wide peaks, all three of different
+    heights. The leftmost peak is highest at 6nA, the middle peak lowest at 1.6nA and the rightmost peak in between
+    at 4nA.  The middle one overlaps the two on the sides.  Overall, the plot spans about 300nm on its x axis with
+    each peak being around 100nm wide.">
+    <figcaption>A plot of the processed measurements. From left to right, the three peaks are blue, green and red.
+    </figcaption>
+</figure><!-- FIXME re-do these measurements, avoiding clipping -->
+<!-- FIXME re-do calibration using CCFL -->
+<!-- FIXME calibration for brightness imbalance due to wedge-shaped projection of spectrum -->
+</div>
+<div class="section" id="color-space-mapping">
+<h4>Color space mapping</h4>
+<p>Finally, to achieve the objective of measuring the LED tape's channels' precise color coordinates the measured spetra
+have to be matched against the color spaces' <em>color matching functions</em>. The color matching functions describe how
+strong the color space's idealized <em>standard observer</em> would react to light at a particular wavelength. Going from a
+measured spectrum to color coordinates XYZ works by integrating over the product of the measurement and each color
+coordinate's color matching function.</p>
+<p>The result are three color coordinates X, Y and Z for each channel R, G and B yielding nine coordinates in total. When
+written as a matrix conversion between XYZ color space and LED-RGB color space is as simple as multiplying that matrix
+(or its inverse) and a vector from one of the color spaces.</p>
+<p>In XYZ space, the set of colors that can be produced with this LED tape is described by the <a class="reference external" href="https://en.wikipedia.org/wiki/Parallelepiped">parallelepiped</a> spanned by
+the three channel's XYZ vectors. In the following figures, you can see a three-dimensional model of the RGB LED's color
+space (colorful) as well as sRGB (white) for comparison plotted within CIE 1931 XYZ. There is no natural map to scale
+both so for this illustration the LED color space has been scaled to fit. These figures were made with blender and a few
+lines of python.  The blender project file including all settings and the python script to generate the color space
+models can be found in the <a class="reference external" href="https://github.com/jaseg/led_drv">project repo</a>.</p>
+<figure>
+    <video controls loop>
+        <source src="video/led_within_srgb_scale=1.0.mkv" type="video/h264">
+        <source src="video/led_within_srgb_scale=1.0.webm" type="video/webm">
+        Your browser does not support the HTML5 video tag.
+    </video>
+    <figcaption>Illustration of the measured LED color space scaled to fit within XYZ with sRGB (light gray) for
+        comparison. The thick, white line is the spectral locus.
+
+        <a href="video/led_within_srgb_scale=1.0.mkv">mkv/h264 download</a> /
+        <a href="video/led_within_srgb_scale=1.0.webm">webm download</a>
+    </figcaption>
+</figure><p>As you can see, the result is pretty disappointing. The LED's color space parallepiped is very narrow, which is because
+the blue channel is much brighter than the other two channels. An easy fix for this is to scale-up the RGB space and
+drop any values outside XYZ. The scaling factor is a trade-off between color space coverage and brightness. You can
+produce the most colors when you clip all channels to brightness of the weakest channel (green in this case), but that
+will make the result very dim. Scaling brightness like that stretches the RGB parallelepiped along its major axis. Up to
+a point the number of possible colors (the gamut) increases at expense of maximum brightness. When the parallelepiped is
+stretched far enought for all three channel vectors to be outside the 1,1,1 XYZ-cube, maximum brightness continues to
+decrease but the gamut stays constant. I don't know a simple scientific way to solve this problem, so I just played
+around with a couple of factors and settled on 2.5 as a reasonable compromise. Below is an illustration.</p>
+<figure>
+    <video controls loop>
+        <source src="video/led_within_srgb_fancy_camera_path_scale=2.5.mkv" type="video/h264">
+        <source src="video/led_within_srgb_fancy_camera_path_scale=2.5.webm" type="video/webm">
+        Your browser does not support the HTML5 video tag.
+    </video>
+    <figcaption>Illustration of the measured LED color space at scale factor 2.5 within XYZ with sRGB (light gray)
+        for comparison. The thick, white line is the spectral locus.
+
+        <a href="video/led_within_srgb_fancy_camera_path_scale=2.5.mkv">mkv/h264 download</a> /
+        <a href="video/led_within_srgb_fancy_camera_path_scale=2.5.webm">webm download</a>
+    </figcaption>
+</figure></div>
+</div>
+</div>
+<div class="section" id="firmware-implementation">
+<h2>Firmware implementation</h2>
+<p>In the end, the above measurements yield two matrices: One for mapping XYZ to RGB, and one for mapping RGB to XYZ. Of
+the several versions of CIE XYZ I chose the CIE 1931 XYZ color space as a basis for the firmware because it is most
+popular. Mapping a color coordinate in one color space to the other is as simple as performing nine floating-point
+multiplications and six additions. Mapping Lab or Lch to RGB is done by first mapping Lab/Lch to XYZ, then XYZ to RGB.
+Lab to XYZ is somewhat complex since it requires a floating-point power for gamma correction, but any self-respecting
+libc will have one of those so this is still no problem. Lch also requires floating-point sine and cosine functions, but
+these should still be no problem on most hardware.</p>
+<p>My implementation of these conversions in the ESP8266 firmware of my <a class="reference external" href="https://jaseg.github.io/_testrepo/posts/wifi-led-driver/">Wifi LED driver</a> can be found <a class="reference external" href="https://github.com/jaseg/esp_led_drv/blob/master/user/led_controller.c">on Github</a>.</p>
+</div>
+</div>
+</main>
+
+    <footer>
+      
+<script>
+(function() {
+  function center_el(tagName) {
+    var tags = document.getElementsByTagName(tagName), i, tag;
+    for (i = 0; i < tags.length; i++) {
+      tag = tags[i];
+      var parent = tag.parentElement;
+      
+      if (parent.childNodes.length === 1) {
+        
+        if (parent.nodeName === 'A') {
+          parent = parent.parentElement;
+          if (parent.childNodes.length != 1) continue;
+        }
+        if (parent.nodeName === 'P') parent.style.textAlign = 'center';
+      }
+    }
+  }
+  var tagNames = ['img', 'embed', 'object'];
+  for (var i = 0; i < tagNames.length; i++) {
+    center_el(tagNames[i]);
+  }
+})();
+</script>
+
+      
+      <div id="license-info">
+           &#169;2018 by Sebastian Götte. This work is licensed under
+           <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>.
+      </div>
+    </footer>
+  </body>
+</html>
+

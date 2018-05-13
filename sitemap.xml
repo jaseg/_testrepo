@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/posts/serial-protocols/</loc>
+    <lastmod>2018-05-19T08:09:46+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/posts/zeus-hammer/</loc>
+    <lastmod>2018-05-03T11:59:37+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/posts/multichannel-led-driver/</loc>
+    <lastmod>2018-05-02T11:31:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/posts/wifi-led-driver/</loc>
+    <lastmod>2018-05-02T11:31:03+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/posts/led-characterization/</loc>
+    <lastmod>2018-05-02T11:18:38+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/posts/</loc>
+    <lastmod>2018-05-19T08:09:46+02:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/tags/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://jaseg.github.io/_testrepo/</loc>
+    <lastmod>2018-05-19T08:09:46+02:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+</urlset>
